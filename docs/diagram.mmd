@@ -1,0 +1,27 @@
+flowchart LR
+  subgraph Host["🖥️ Host マシン（Windows）"]
+    Bridge["🐍 bridge.py - MQTT Subscriber<br/>━━━━━━━━━━━━━━━━<br/>機能：Mosquittoからのメッセージ受信、Lambda起動<br/>トピック：sensor/data<br/>停止：Ctrl+Cによるクリーン終了"]
+    LocalStack["☁️ LocalStack<br/>━━━━━━━━━━━━━━━━<br/>エンドポイント：http://localhost:4566<br/>機能：AWS Lambda ローカル実行環境、Lambda実行時の一時コンテナ作成"]
+  end
+
+  subgraph Docker["🐳 Docker ネットワーク"]
+    Mosquitto["🌐 Mosquitto Broker<br/>━━━━━━━━━━━━━━━━<br/>リスナーポート：8883<br/>プロトコル：MQTT over TLS 1.2<br/>設定ファイル：mosquitto.conf<br/>証明書：./mosquitto-certs/"]
+    Publisher["⚙️ Publisher<br/>━━━━━━━━━━━━━━━━<br/>言語：C言語（Paho MQTT C）<br/>ビルド：ビルドコンテナ利用<br/>出力：publisher_bin<br/>動作：30秒間隔での送信、SIGINTでのクリーン終了、再接続対応"]
+    Certs["🔐 TLS証明書<br/>━━━━━━━━━━━━━━━━<br/>ca.crt：CA証明書<br/>server.crt：サーバ証明書<br/>server.key：秘密鍵<br/>自己署名証明書（開発用）"]
+  end
+
+  Publisher -->|MQTT publish<br/>ssl://host.docker.internal:8883<br/>TLS 1.2暗号化| Mosquitto
+  Mosquitto -->|MQTT subscribe<br/>sensor/data<br/>JSON形式メッセージ| Bridge
+  Bridge -->|boto3 invoke<br/>FunctionName: iot_processor<br/>同期実行| LocalStack
+  Mosquitto -.->|証明書参照<br/>TLS通信用| Certs
+
+  classDef hostfill fill:#ffb3de,stroke:#333,stroke-width:2px;
+  classDef dockerfill fill:#b3d9ff,stroke:#333,stroke-width:2px;
+  classDef secfill fill:#ffffb3,stroke:#333,stroke-width:2px;
+  class Bridge,LocalStack hostfill;
+  class Publisher,Mosquitto dockerfill;
+  class Certs secfill;
+
+  %% 運用メモノード（表示用）
+  Ops["📋 運用メモ<br/>━━━━━━━━━━━━━━━━<br/>・Lambda実行後の一時コンテナは手動削除または自動クリーンアップ検討<br/>・ネットワーク解放時は残存コンテナの停止・削除実行"]
+  LocalStack --- Ops

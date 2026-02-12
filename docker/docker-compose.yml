@@ -1,0 +1,29 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto_broker
+    ports:
+      - "8883:8883"            # MQTT over TLS
+      - "9001:9001"            # WebSocket用
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mosquitto-certs:/mosquitto/config/certs:ro
+    networks:
+      - localstack_network
+
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack_main
+    ports:
+      - "4566:4566"            # Terraform/Lambda用
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      - SERVICES=lambda,iam,sts,iot,ec2
+      - DEBUG=1                        # デバッグログを有効化
+    networks:
+      - localstack_network
+
+networks:
+  localstack_network:
+    driver: bridge
