@@ -44,7 +44,7 @@ python subscribe/bridge.py
 
 - Publisher（`publisher.c`）：30 秒間隔の送信ループと SIGINT によるクリーンアップ処理。
 - エラーハンドリング：送信失敗時の再接続処理。
-- Subscriber（`bridge.py`）：MQTT 受信で Lambda を呼び出す設計、開発用に TLS 検証無効化。
+- Subscriber（`bridge.py`）：MQTT 受信で Lambda を呼び出す設計、開発用に TLS 検証無効化。(現在は本番環境向けに有効)
 - LocalStack：Lambda 実行時に一時コンテナを作成する挙動に注意。
 
 ## コンテナ／ネットワークのクリーンアップ手順
@@ -73,7 +73,7 @@ docker network prune -f
 ## 補足
 
 - 本番環境では正式な CA 発行証明書の利用と TLS 検証の有効化が必要。
-- 詳細と背景はコミットログおよび `docs/diagram.mmd` を参照。
+- 構成図は `docs/diagram.mmd` を参照。
 
 
 # EC2Study - MQTT TLS セキュリティ実装プロジェクト
@@ -90,9 +90,9 @@ Docker Desktop を用いた疑似的な MQTT 通信環境。C言語 Publisher �
 - PowerShell または Bash
 - OpenSSL (証明書生成用)
 
-## 実行手順
+## 実行手順(開発環境)
 
-### 1. 事前準備：TLS 証明書生成
+### 1. 事前準備：TLS 証明書生成(開発環境用では必要なし)
 
 ブローカー用の CA・サーバ証明書を生成。
 
@@ -156,7 +156,7 @@ python subscribe/bridge.py
 |---|---|---|---|
 | Mosquitto リスナー | 8883 | MQTT over TLS | セキュア通信用 |
 | Publisher | 8883 | ssl:// スキーム | OpenSSL ベース TLS 接続 |
-| Subscriber | 8883 | Python ssl + paho-mqtt | TLS 検証無効化 (開発用) |
+| Subscriber | 8883 | Python ssl + paho-mqtt | TLS 検証無効化 (開発用) |TLS 検証有効化 (本番用)
 
 ### 証明書構成
 
@@ -171,7 +171,7 @@ python subscribe/bridge.py
 - SSL オプション：証明書検証無効化 (`enableServerCertAuth = 0`)
 
 **Subscriber (bridge.py)**
-- 接続先：`host.docker.internal:8883`
+- 接続先：`localhost:8883`
 - `client.tls_set()` と `tls_insecure_set(True)` で自己署名証明書対応
 
 **Mosquitto (mosquitto.conf)**
@@ -207,7 +207,7 @@ docker run --rm --add-host=host.docker.internal:host-gateway alpine:latest /bin/
 - mosquitto.conf の certfile/keyfile パスが正確か確認
 - 証明書ファイル権限が正しいか確認 (`chmod 644`)
 
-### localhost 使用時の接続エラー
+### localhost 使用時の接続エラー(開発環境)
 
 **原因**：コンテナ内の localhost はコンテナ自身を指す
 
@@ -260,4 +260,4 @@ ldconfig
 
 - **証明書**：正規 CA から発行された証明書を使用
 - **検証**：`enableServerCertAuth = 1`、`tls_insecure_set(False)` に変更
-- **クライアント認証**：双方向認証 (mTLS) の構築検討
+- **クライアント認証**：双方向認証 (mTLS) の構築
