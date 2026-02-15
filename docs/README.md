@@ -16,7 +16,9 @@ openssl genrsa -out docker/mosquitto-certs/ca.key 2048
 openssl req -x509 -new -nodes -key docker/mosquitto-certs/ca.key -sha256 -days 3650 -out docker/mosquitto-certs/ca.crt -subj "/CN=MyMosquittoCA"
 openssl genrsa -out docker/mosquitto-certs/server.key 2048
 openssl req -new -key docker/mosquitto-certs/server.key -out docker/mosquitto-certs/server.csr -subj "/CN=mosquitto"
-openssl x509 -req -in docker/mosquitto-certs/server.csr -CA docker/mosquitto-certs/ca.crt -CAkey docker/mosquitto-certs/ca.key -CAcreateserial -out docker/mosquitto-certs/server.crt -days 365 -sha256
+"subjectAltName=DNS:localhost,DNS:mosquitto,IP:127.0.0.1" | Out-File -FilePath server.ext -Encoding ascii
+openssl x509 -req -in docker/mosquitto-certs/server.csr -CA docker/mosquitto-certs/ca.crt -CAkey docker/mosquitto-certs/ca.key -CAcreateserial -out docker/mosquitto-certs/server.crt -days 365 -sha256 -extfile server.ext
+Remove-Item server.ext
 chmod 644 docker/mosquitto-certs/server.key docker/mosquitto-certs/ca.key
 ```
 
