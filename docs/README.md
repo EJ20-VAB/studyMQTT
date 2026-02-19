@@ -32,7 +32,7 @@ docker-compose up -d
 3. Publisher 実行：Paho ビルド済みコンテナによる Publisher 実行コマンド。
 
 ```bash
-docker run --rm -v C:\Users\ychxy\OneDrive\Desktop\GIT\EC2study:/work --add-host=host.docker.internal:host-gateway --entrypoint /bin/bash paho-wolfssl-builder -c "/work/docker/build-paho-wolfssl/build_and_package.sh && /work/output/publisher_bin"
+docker run --rm -v "${pwd}:/work" --add-host=host.docker.internal:host-gateway --entrypoint /bin/bash paho-wolfssl-builder -c "/work/docker/build-paho-wolfssl/build_and_package.sh && /work/output/publisher_bin"
 ```
 
 4. Subscriber 実行：`bridge.py` による受信と Lambda 呼び出し（LocalStack 利用時）。
