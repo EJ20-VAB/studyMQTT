@@ -1,4 +1,4 @@
-# EC2Study — 概要メモ
+# studyMQTT — 概要メモ
 
 ローカル検証用の TLS 対応 MQTT 環境メモ。
 
